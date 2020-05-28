@@ -1,39 +1,44 @@
-# ClickOS Control
+# Unimon Control 🎛
 
-ClickOS is a port of the popular modular router Click, to the MiniOS operative
-system, that enables Click to run under the Xen hypervisor. ClickOS Control
-implements the necessary functionality to control a ClickOS instance.
+Unimon Control is port of [ClickOS Control](https://github.com/sysml/clickos-ctl) into Python. This hopes to make life easier for future edits given the amou t of string handling required from this program...
 
-## Basic functionality
+This currently supports all the same features as the original ClickOS Control so can be used as a stand in replacement. This program does **not** depend on `libxenstore`, but does depend on `pyxs`.
 
-ClickOS Control supports the following operations:
+See the README for ClickOS Control [here](https://github.com/sysml/clickos-ctl/blob/master/README.md).
 
-* Install and remove a router from a running ClickOS instance;
-* Start, stop and pause installed routers;
-* Read and write routers' element handlers.
+## Installation
 
-## Controlling mechanisms
+Install using pip (for python 3):
+```bash
+pip install --user unimon-ctl
+sudo unimon-ctl -h
+```
+(script should be added to `~/.local/bin` by default)
 
-There are multiple communications channels to access a ClickOS instance and
-configure it. Currently only xenstore is supported both on ClickOS and ClickOS
-Control, but others, like vchan, are planned.
+Or use with Docker:
 
+```bash
+docker run --rm -it -v /var/run/xenstored/socket:/var/run/xenstored/socket willfantom/unimon-ctl -h
+```
 
-# Development
+## Re-Implemented ClickOS-Ctl Features
 
-ClickOS control is currently developed as a separated project, but it's planned
-to upstream it to the Click repository at a certain point.
+- Use xenstore to communicate with clickos instance ✅
+- Install/Remove click configs to clickos domains ✅
+  - via `install`/`remove` sub commands
+- Start/Stop clickos routers ✅
+  - via `start`/`stop` sub commands
 
-## Limitations
+## Added Features
 
-The current version doesn't support element handlers.
+- Get list of clickos domain's routers and states ✅
+  - via `list` sub command
+- Check state of specific router ✅
+  - via `state` sub command
+- Prints some emoji ✅
+- Pythony (can be installed via `pip`) 🐍
+- Dockery (can be ran using Docker) 🐳
 
+## Notice
 
-# Build
-
-ClickOS Control is written in C++11. It can be built with any modern C++
-compiler. Tested with gcc and clang.
-
-The only dependency is `libxenstore` from xen.
-
-To build, simply run `make`.
+This has been made as part of my PhD work, so will not be maintained beyond the feature set I require.
