@@ -15,6 +15,12 @@ def get_cli_logger():
     cli_logger.setLevel(logging.DEBUG)
   return cli_logger
 
+def validate_domain_id(did):
+  if did[0] <= 0:
+    logging.fatal("🚨  || domain id must be greater than 0")
+    exit(1)
+  return did[0]
+
 def main():
 
   cli_logger = get_cli_logger()
@@ -25,7 +31,7 @@ def main():
   def run_api(args):
     cli_logger.debug("runing api")
     try:
-      api(is_debug, args.get("port"), controller)
+      api(is_debug, args.get("port"), args.get("mechanism"), controller)
       exit(0)
     except Error as e:
       cli_logger.error(e.get_pretty())
@@ -33,6 +39,7 @@ def main():
 
   def list_routers(args):
     cli_logger.debug("listing routers")
+    domain_id = validate_domain_id(args.get("domain_id"))
     try:
       routers = controller.get_router_list(args.get("mechanism"), domain_id)
       print("👍  || router list")
@@ -45,6 +52,7 @@ def main():
 
   def check_state(args):
     cli_logger.debug("checking state")
+    domain_id = validate_domain_id(args.get("domain_id"))
     try:
       state = controller.get_router_state(args.get("mechanism"), domain_id, args.get("router_id"))
       print("👍  || router state || \033[1m{}\033[0m".format(state))
@@ -58,6 +66,7 @@ def main():
 
   def install_config(args):
     logging.debug("installing config")
+    domain_id = validate_domain_id(args.get("domain_id"))
     try:
       name = args.get("config-path") if args.get("name") == None else args.get("name")[0]
       rid = controller.install_from_file(args.get("mechanism"), domain_id, args.get("config-path"), name)
@@ -72,6 +81,7 @@ def main():
 
   def remove_router(args):
     cli_logger.debug("removing router")
+    domain_id = validate_domain_id(args.get("domain_id"))
     try:
       controller.remove_router(args.get("mechanism"), domain_id, args.get("router_id"), args.get("f"))
       print("👍  || router has been removed || \033[1m{}\033[0m".format(args.get("router_id")))
@@ -82,6 +92,7 @@ def main():
 
   def start_router(args):
     cli_logger.debug("starting router")
+    domain_id = validate_domain_id(args.get("domain_id"))
     try:
       rid = controller.start_router(args.get("mechanism"), domain_id, args.get("router_id"))
       print("👍  || router started || \033[1m{}\033[0m".format(rid))
@@ -92,6 +103,7 @@ def main():
 
   def stop_router(args):
     cli_logger.debug("stopping router")
+    domain_id = validate_domain_id(args.get("domain_id"))
     try:
       rid = controller.stop_router(args.get("mechanism"), domain_id, args.get("router_id"))
       print("👍  || router stopped || \033[1m{}\033[0m".format(rid))
@@ -102,6 +114,7 @@ def main():
 
   def get_handler(args):
     cli_logger.debug("getting handler")
+    domain_id = validate_domain_id(args.get("domain_id"))
     try:
       data = controller.get_elem_handler(args.get("mechanism"), domain_id, args.get("router_id"), args.get("element"), args.get("handler"))
       print("👍  || data grabbed || \033[1m{}\033[0m".format(data))
@@ -110,7 +123,7 @@ def main():
       cli_logger.error(e.get_pretty())
       exit(1)
 
-  def print_version():
+  def print_version(args=None):
     cli_logger.debug("printing version")
     print("👀  ||| Unimon Control Version ||| \033[1m{}\033[0m".format(controller.get_version()))
 
@@ -118,10 +131,10 @@ def main():
   parser = argparse.ArgumentParser(description="Control ClickOS Xen Domains")
 
   # - Top Level
-  parser.add_argument('domain_id', type=int, nargs=1, help="the xen domain id running a clickos image")
   parser.add_argument('--mechanism', type=str, default=controller.DEFAULT_COM_MECH, help="what mechanism to use for inter-domain communication (default: %(default)s)")
-  parser.add_argument('--debug', action='store_true', help="enable debug level logging")
-  parser.add_argument('--version', action='store_true', help="print the version")
+  parser.add_argument('--debug', action='store_true', default=False, help="enable debug level logging")
+  parser.add_argument('--version', action='store_true', default=False, help="print the version")
+  parser.set_defaults(func=print_version)
   subparsers = parser.add_subparsers(help='sub-command help')
   api_parser = subparsers.add_parser('api', help="run the unimon-ctl api")
   list_parser = subparsers.add_parser('list', help="get a list of all clickos routers present on a domain")
@@ -138,36 +151,44 @@ def main():
   api_parser.set_defaults(func=run_api)
 
   # -- List
+  list_parser.add_argument('domain_id', type=int, nargs=1, default=0, help="the xen domain id running a clickos image")
   list_parser.set_defaults(func=list_routers)
 
   # -- State
+  state_parser.add_argument('domain_id', type=int, nargs=1, default=0, help="the xen domain id running a clickos image")
   state_parser.add_argument('router_id', type=int, help="the id of the target clickos router")
   state_parser.set_defaults(func=check_state)
 
   # -- Config Check
+  check_parser.add_argument('domain_id', type=int, nargs=1, default=0, help="the xen domain id running a clickos image")
   check_parser.add_argument('router_id', type=int, help="the id of the target clickos router")
   check_parser.set_defaults(func=check_config)
 
   # -- Install
+  install_parser.add_argument('domain_id', type=int, nargs=1, default=0, help="the xen domain id running a clickos image")
   install_parser.add_argument('config-path', type=str, help="the path of the .click file to use as the config")
   install_parser.add_argument('--name', type=str, nargs=1, help="add a friendly name for the router config")
   install_parser.add_argument('-s', action='store_true', help="once config installed, start the clickos router")
   install_parser.set_defaults(func=install_config)
 
   # -- Remove
+  remove_parser.add_argument('domain_id', type=int, nargs=1, default=0, help="the xen domain id running a clickos image")
   remove_parser.add_argument('router_id', type=int, help="the id of the target router")
   remove_parser.add_argument('-f', action='store_true', help="if router is still running, it will be stopped")
   remove_parser.set_defaults(func=remove_router)
 
   # -- Start
+  start_parser.add_argument('domain_id', type=int, nargs=1, default=0, help="the xen domain id running a clickos image")
   start_parser.add_argument('router_id', type=int, help="the id of the target clickos router")
   start_parser.set_defaults(func=start_router)
 
   # -- Stop
+  stop_parser.add_argument('domain_id', type=int, nargs=1, default=0, help="the xen domain id running a clickos image")
   stop_parser.add_argument('router_id', type=int, help="the id of the target clickos router")
   stop_parser.set_defaults(func=stop_router)
 
   # -- Handler
+  handler_parser.add_argument('domain_id', type=int, nargs=1, default=0, help="the xen domain id running a clickos image")
   handler_parser.add_argument('router_id', type=int, help="the id of the target clickos router")
   handler_parser.add_argument('element', type=str, help="the name of the target element")
   handler_parser.add_argument('handler', type=str, help="the name of the target handler")
@@ -176,10 +197,6 @@ def main():
   # Parse
   args = parser.parse_args()
   args_dict = vars(parser.parse_args())
-  domain_id = args_dict.get("domain_id", -1)[0]
-  if domain_id <= 0:
-    logging.fatal("domain id must be greater than 0")
-    exit(1)
   do_version = args_dict.get("version", False)
   if do_version:
     print_version()
@@ -188,7 +205,5 @@ def main():
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s || %(message)s')
     controller.set_debug()
 
-  args.func(vars(parser.parse_args()))
-
-main()
+  args.func(args_dict)
 

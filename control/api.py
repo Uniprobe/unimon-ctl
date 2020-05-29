@@ -7,14 +7,17 @@ import logging
 
 API_BASE = "/api/v1"
 
-def api(debug, port, controller):
+DEFAULT_MECH = ""
+
+def api(debug, port, mechanism, controller):
   logger = logging.getLogger("api")
   logger.setLevel(logging.DEBUG)
+  DEFAULT_MECH = mechanism
 
   app = Flask('unimon-ctl')
   app.config["DEBUG"] = debug
 
-  @app.route(API_BASE+"/version", methods=['GET'])
+  @app.route(API_BASE, methods=['GET'])
   def help():
     logger.debug("📩  || api request for help")
     commands = {
@@ -22,7 +25,7 @@ def api(debug, port, controller):
       "domain_id/list": "get a list of all clickos routers on a domain",
       "domain_id/router_id/state": "get the state of a given clickos router"
     }
-    body = jsonify(version)
+    body = jsonify(commands)
     return body, 200
 
   @app.route(API_BASE+"/version", methods=['GET'])
@@ -39,7 +42,7 @@ def api(debug, port, controller):
   def list_routers(domain_id):
     logger.debug("📩  || api request for list routers")
     try:
-      mechanism = request.args.get("mechanism", controller.DEFAULT_COM_MECH)
+      mechanism = request.args.get("mechanism", DEFAULT_MECH)
       routers = controller.get_router_list(mechanism, domain_id)
       return jsonify(routers), 200
     except Error as e:
