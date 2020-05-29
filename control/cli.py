@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from .errors import Error
 from .controller import UnimonControl
+from .api import api
 
 import argparse
 import logging
@@ -20,6 +21,15 @@ def main():
 
   logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s || %(message)s')
   controller = UnimonControl()
+
+  def run_api(args):
+    cli_logger.debug("runing api")
+    try:
+      api(is_debug, args.get("port"), controller)
+      exit(0)
+    except Error as e:
+      cli_logger.error(e.get_pretty())
+      exit(1)
 
   def list_routers(args):
     cli_logger.debug("listing routers")
@@ -113,6 +123,7 @@ def main():
   parser.add_argument('--debug', action='store_true', help="enable debug level logging")
   parser.add_argument('--version', action='store_true', help="print the version")
   subparsers = parser.add_subparsers(help='sub-command help')
+  api_parser = subparsers.add_parser('api', help="run the unimon-ctl api")
   list_parser = subparsers.add_parser('list', help="get a list of all clickos routers present on a domain")
   state_parser = subparsers.add_parser('state', help="get the state of clickos router")
   check_parser = subparsers.add_parser('config', help="get the current config name on a clickos router")
@@ -121,6 +132,10 @@ def main():
   start_parser = subparsers.add_parser('start', help="start a clickos router")
   stop_parser = subparsers.add_parser('stop', help="stop a clickos router")
   handler_parser = subparsers.add_parser('handler', help="get an elements handler value")
+
+  # -- API
+  api_parser.add_argument('--port', type=int, default=8080, help="the port to tun the api over")
+  api_parser.set_defaults(func=run_api)
 
   # -- List
   list_parser.set_defaults(func=list_routers)
