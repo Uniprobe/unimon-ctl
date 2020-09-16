@@ -48,6 +48,67 @@ def api(debug, port, mechanism, controller):
     except Error as e:
       logger.error(e.get_pretty())
       return e.get_json()
+
+  @app.route(API_BASE+"/<int:domain_id>/<int:router_id>/state", methods=['GET'])
+  def router_state(domain_id, router_id):
+    logger.debug("📩  || api request for get router state")
+    try:
+      mechanism = request.args.get("mechanism", DEFAULT_MECH)
+      state = controller.get_router_state(mechanism, domain_id, router_id)
+      return jsonify({"state": state}), 200
+    except Error as e:
+      logger.error(e.get_pretty())
+      return e.get_json()
+
+  @app.route(API_BASE+"/<int:domain_id>/<int:router_id>/start", methods=['GET'])
+  def start_router(domain_id, router_id):
+    logger.debug("📩  || api request for start router")
+    try:
+      mechanism = request.args.get("mechanism", DEFAULT_MECH)
+      rid = controller.start_router(mechanism, domain_id, router_id)
+      return jsonify({"message": "router {} started".format(rid)}), 200
+    except Error as e:
+      logger.error(e.get_pretty())
+      return e.get_json()
+
+  @app.route(API_BASE+"/<int:domain_id>/<int:router_id>/stop", methods=['GET'])
+  def stop_router(domain_id, router_id):
+    logger.debug("📩  || api request for stop router")
+    try:
+      mechanism = request.args.get("mechanism", DEFAULT_MECH)
+      rid = controller.stop_router(mechanism, domain_id, router_id)
+      return jsonify({"message": "router {} stopped".format(rid)}), 200
+    except Error as e:
+      logger.error(e.get_pretty())
+      return e.get_json()
+
+  @app.route(API_BASE+"/<int:domain_id>/<int:router_id>/remove", methods=['GET'])
+  def remove_router(domain_id, router_id):
+    logger.debug("📩  || api request for remove router")
+    try:
+      mechanism = request.args.get("mechanism", DEFAULT_MECH)
+      force = request.args.get("force", False)
+      if not isinstance(force, bool):
+        force = False
+      controller.remove_router(mechanism, domain_id, router_id, force=force)
+      return jsonify({"message": "router removed"}), 200
+    except Error as e:
+      logger.error(e.get_pretty())
+      return e.get_json()
+
+  @app.route(API_BASE+"/<int:domain_id>/install", methods=['GET'])
+  def install_router(domain_id, router_id):
+    logger.debug("📩  || api request for install router")
+    try:
+      mechanism = request.args.get("mechanism", DEFAULT_MECH)
+      name = request.args.get("name", DEFAULT_MECH)
+      if not isinstance(force, bool):
+        force = False
+      controller.remove_router(mechanism, domain_id, router_id, force=force)
+      return jsonify({"message": "router removed"}), 200
+    except Error as e:
+      logger.error(e.get_pretty())
+      return e.get_json()
     
 
   logger.debug("💬  || running api")
